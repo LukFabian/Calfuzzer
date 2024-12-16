@@ -7,7 +7,6 @@
     </taskdef>
     <property name="javato.home.dir" location="."/>
     <property name="benchdir" location="src/benchmarks"/>
-    <property name="external_benchdir" location="./external_benchmarks"/>
     <property name="javabenchdir" location="../java_bench"/>
     <property name="tmpdir" location="./tmp"/>
 
@@ -32,21 +31,21 @@
     </target>
 
     <target name="cleanall">
-      <delete>
-        <fileset dir="${javato.home.dir}">
-          <include name="**/tmpclasses/**"/>
-          <include name="**/tmpbootclasses/**"/>
-          <include name="**/javato.usedids"/>
-          <include name="**/iidToLine.map"/>
-          <include name="**/iidToLine.map.html"/>
-          <include name="**/error.log"/>
-          <include name="**/error.list"/>
-          <include name="**/error.stat"/>
-          <include name="**/error.time"/>
-          <include name="**/atomicity_data.out"/>
-          <include name="**/execs"/>
-        </fileset>
-      </delete>
+        <delete>
+            <fileset dir="${javato.home.dir}">
+                <include name="**/tmpclasses/**"/>
+                <include name="**/tmpbootclasses/**"/>
+                <include name="**/javato.usedids"/>
+                <include name="**/iidToLine.map"/>
+                <include name="**/iidToLine.map.html"/>
+                <include name="**/error.log"/>
+                <include name="**/error.list"/>
+                <include name="**/error.stat"/>
+                <include name="**/error.time"/>
+                <include name="**/atomicity_data.out"/>
+                <include name="**/execs"/>
+            </fileset>
+        </delete>
     </target>
 
     <target name="instr" description="run instrumentor" depends="clean">
@@ -84,6 +83,8 @@
                 </path>
             </else>
         </if>
+        <echo message="BLAALALALLAL ${javato.work.dir}"/>
+        <echo message="JAJAJJAJ ${javato.home.dir}"/>
         <java classname="javato.activetesting.instrumentor.InstrumentorForActiveTesting"
               fork="true" dir="${javato.work.dir}" maxmemory="8192m">
             <arg value="-keep-line-number"/>
@@ -142,23 +143,22 @@
             <available file="${javato.work.dir}/tmpbootclasses"/>
             <then>
                 <property name="jvm_args"
-                          value="-ea -Xbootclasspath/p:tmpbootclasses:${javato.home.dir}/classes"/>
+                          value="-ea -Xbootclasspath/p:tmpbootclasses:${javato.home.dir}/classes -agentlib:jdwp=transport=dt_socket,server=n,address=CAS-N03767.home.cas.de:5005,suspend=y,onthrow=java.lang.Exception,onuncaught=y,launch=cmd"/>
             </then>
             <else>
-                <property name="jvm_args" value="-ea"/>
+                <property name="jvm_args" value="-ea "/>
             </else>
         </if>
         <stopwatch name="timer" action="start"/>
         <java classname="${javato.app.main.class}"
-              fork="true" dir="${javato.work.dir}" maxmemory="8192m">
+              fork="true" dir="${javato.work.dir}" maxmemory="1024m">
             <arg line="${javato.app.args}"/>
-            <jvmarg line="${jvm_args}"/>
+            <jvmarg line="${jvm_args} "/>
             <!--            <sysproperty key="javato.deadlock.goodlock" value="false"/> -->
             <syspropertyset>
                 <propertyref builtin="all"/>
             </syspropertyset>
             <classpath>
-                <pathelement location="${javato.home.dir}/lib/guava-20.0.jar"/>
                 <pathelement location="${javato.work.dir}/tmpclasses"/>
                 <pathelement path="${javato.app.class.path}"/>
                 <pathelement location="${javato.home.dir}/classes"/>
@@ -308,167 +308,22 @@
         </if>
     </target>
 
-    <target name="analysis-run-Native" description="">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.EmptyAnalysis"/>
-        </antcall>
-    </target>
 
-    <target name="instr-run-Native" description="">
+    <target name="deadlock-analysis" description="Run igoodlock and deadlockfuzzer with 3 trials per potential error">
         <property name="javato.ignore.methods" value="true"/>
         <property name="javato.ignore.allocs" value="true"/>
         <property name="javato.ignore.fields" value="true"/>
-        <property name="javato.ignore.concurrency" value="true"/>
-        <property name="javato.ignore.arrays" value="true"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="analysis-run-DeadlockFuzzer" description="">
         <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
         <property name="javato.activetesting.trialnum.list" value="1,2,3"/>
+        <antcall target="instr"/>
         <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.IGoodlockAnalysisLS"/>
+            <param name="javato.activetesting.analysis.class" value="javato.activetesting.IGoodlockAnalysis"/>
         </antcall>
         <antcall target="active-loop">
             <param name="javato.activetesting.analysis.class" value="javato.activetesting.DeadlockFuzzerAnalysis"/>
         </antcall>
     </target>
 
-    <target name="instr-run-DeadlockFuzzer" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="true"/>
-        <property name="javato.ignore.fields" value="true"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.ignore.arrays" value="true"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="analysis-run-DeadlockFuzzer-I" description="">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.EmptyAnalysisNoMemory"/>
-        </antcall>
-    </target>
-
-    <target name="instr-run-DeadlockFuzzer-I" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="true"/>
-        <property name="javato.ignore.fields" value="true"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.ignore.arrays" value="true"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="analysis-run-SPDOnline" description="">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.SPDOnline"/>
-        </antcall>
-    </target>
-
-    <target name="instr-run-SPDOnline" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="false"/>
-        <property name="javato.ignore.fields" value="false"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.ignore.arrays" value="false"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="analysis-run-SPDOnline-I" description="">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.EmptyAnalysis"/>
-        </antcall>
-    </target>
-
-    <target name="instr-run-SPDOnline-I" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="false"/>
-        <property name="javato.ignore.fields" value="false"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.ignore.arrays" value="false"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="analysis-run-PrintTrace" description="">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.PrintTraceAnalysis"/>
-        </antcall>
-    </target>
-
-    <target name="instr-run-PrintTrace" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="false"/>
-        <property name="javato.ignore.fields" value="false"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.ignore.arrays" value="false"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-    </target>
-
-    <target name="deadlock-analysis-e" description="">
-        <property name="javato.ignore.methods" value="true"/>
-        <property name="javato.ignore.allocs" value="true"/>
-        <property name="javato.ignore.fields" value="true"/>
-        <property name="javato.ignore.concurrency" value="true"/>
-        <property name="javato.ignore.arrays" value="true"/>
-        <property name="javato.ignore.trackLocals" value="false"/>
-        <property name="javato.ignore.trackDeterministicLocals" value="false"/>
-
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1"/>
-        <antcall target="instr"/>
-        <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.EmptyAnalysis"/>
-        </antcall>
-    </target>
-
-    <target name="deadlock-analysis" description="Run igoodlock and deadlockfuzzer with 3 trials per potential error">
-        <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
-        <property name="javato.activetesting.trialnum.list" value="1,2,3"/>
-        <property name="javato.ignore.arrays" value="false"/>
-        <property name="javato.ignore.methods" value="false"/>
-        <property name="javato.ignore.fields" value="false"/>
-        <property name="javato.ignore.concurrency" value="false"/>
-        <property name="javato.track.locals" value="true"/>
-        <property name="javato.track.locals.deterministic" value="true"/>
-
-        <antcall target="instr"/>
-         <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.IGoodlockAnalysis"/>
-        </antcall>
-    </target>
 
     <target name="test_tsp">
         <property name="javato.work.dir" value="${benchdir}/tsp"/>
@@ -669,574 +524,7 @@
         <antcall target="test_vector"/>
     </target>
 
-    <!-- SPDOnline experiments -->
-    <target name="Deadlock_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.class.path" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="Deadlock"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Deadlock_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.class.path" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="Deadlock"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="Picklock_analysis">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.PickLock"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Picklock_instr">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.PickLock"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Bensalem_analysis">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.Bensalem"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Bensalem_instr">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.Bensalem"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Transfer_analysis">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.Transfer"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Transfer_instr">
-        <property name="javato.work.dir" value="${benchdir}/baseline/src/edu/ucla/pls/baseline"/>
-        <property name="javato.app.class.path" value="${benchdir}/baseline/src"/>
-        <property name="javato.app.main.class" value="edu.ucla.pls.baseline.Transfer"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="Test-Dimmunix_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.Test"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Test-Dimmunix_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.Test"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="StringBuffer_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestStringBuffer"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="StringBuffer_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestStringBuffer"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="Test-Calfuzzer_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock1a"/>
-        <antcall target="analysis-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="Test-Calfuzzer_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock1a"/>
-        <antcall target="instr-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="DiningPhil_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/sir/diningPhilosophers_1.1/diningPhilosophers/versions.alt/orig/dp12"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/sir/diningPhilosophers_1.1/diningPhilosophers/versions.alt/orig/dp12"/>
-        <property name="javato.app.main.class" value="DiningPhilosophers"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="DiningPhil_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/sir/diningPhilosophers_1.1/diningPhilosophers/versions.alt/orig/dp12"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/sir/diningPhilosophers_1.1/diningPhilosophers/versions.alt/orig/dp12"/>
-        <property name="javato.app.main.class" value="DiningPhilosophers"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="HashTable_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestHashTable"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="HashTable_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestHashTable"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Account_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/sir/account_1.1/account/versions.alt/orig"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/sir/account_1.1/account/versions.alt/orig"/>
-        <property name="javato.app.main.class" value="Main"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Account_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/sir/account_1.1/account/versions.alt/orig"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/sir/account_1.1/account/versions.alt/orig"/>
-        <property name="javato.app.main.class" value="Main"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Log4j2_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/JaConTeBe_1.0/JaConTeBe/source"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/log4j-1.2.13.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/coring-1.4.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/jacontebe-1.0.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/log4j2/orig/"/>
-        <property name="javato.app.main.class" value="com.main.Test41214"/>
-        <property name="javato.app.instr.dir"
-                value="${javato.work.dir}/dist/classes"/>
-        <property name="javato.instops" value="-i org.apache"/>
-        <property name="javato.app.args" value="-mo"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Log4j2_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/JaConTeBe_1.0/JaConTeBe/source"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/log4j-1.2.13.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/coring-1.4.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/jacontebe-1.0.jar:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/log4j2/orig/"/>
-        <property name="javato.app.main.class" value="com.main.Test41214"/>
-        <property name="javato.app.instr.dir"
-                value="${javato.work.dir}/dist/classes"/>
-        <property name="javato.instops" value="-i org.apache"/>
-        <property name="javato.app.args" value="-mo"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="Dbcp1_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/dbcp1"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dbcp1/orig:${benchdir}/realLib/jacontebe-1.0.jar:${benchdir}/realLib/coring-1.4.jar:${benchdir}/realLib/commons-dbcp-1.2.jar:${benchdir}/realLib/commons-pool-1.2.jar:${benchdir}/realLib/mockito-all-1.9.5.jar:${benchdir}/realLib/commons-collections-2.1.jar"/>
-        <property name="javato.app.main.class" value="Dbcp65"/>
-        <property name="javato.instops" value="-i org.apache -i java.sql"/>
-        <property name="javato.app.args" value="-mo"/>
-        <antcall target="analysis-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="Dbcp1_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/dbcp1"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dbcp1/orig:${benchdir}/realLib/jacontebe-1.0.jar:${benchdir}/realLib/coring-1.4.jar:${benchdir}/realLib/commons-dbcp-1.2.jar:${benchdir}/realLib/commons-pool-1.2.jar:${benchdir}/realLib/mockito-all-1.9.5.jar:${benchdir}/realLib/commons-collections-2.1.jar"/>
-        <property name="javato.app.main.class" value="Dbcp65"/>
-        <property name="javato.instops" value="-i org.apache -i java.sql"/>
-        <property name="javato.app.args" value="-mo"/>
-        <antcall target="instr-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="Dbcp2_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/dbcp2"/>
-        <property name="javato.app.instr.dir" value="${external_benchdir}/orig"/>
-        <property name="javato.app.class.path" value="${benchdir}/dbcp2/orig:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/mockito-all-1.9.5.jar"/>
-        <property name="javato.app.main.class" value="Dbcp270"/>
-        <property name="javato.instops" value="-i org.apache -i java.sql -i org.mockito -i org.hamcrest -i objenesis"/>
-        <property name="javato.app.args" value="-mo"/>
-        <antcall target="analysis-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="Dbcp2_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/dbcp2"/>
-        <property name="javato.app.instr.dir" value="${javato.work.dir}/orig"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dbcp2/orig:${external_benchdir}/JaConTeBe_1.0/JaConTeBe/versions.alt/lib/realLib/mockito-all-1.9.5.jar"/>
-        <property name="javato.app.main.class" value="Dbcp270"/>
-        <property name="javato.instops" value="-i org.apache -i java.sql -i org.mockito -i org.hamcrest -i objenesis"/>
-        <property name="javato.app.args" value="-mo"/>
-        <antcall target="instr-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="RayTracer_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.JGFRayTracerBenchSizeA"/>
-        <property name="javato.app.args" value="3"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="RayTracer_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.JGFRayTracerBenchSizeA"/>
-        <property name="javato.app.args" value="3"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Tsp_analysis">
-        <property name="javato.work.dir" value="${benchdir}/tsp"/>
-        <property name="javato.app.main.class" value="benchmarks.tsp.Tsp"/>
-        <property name="javato.app.args" value="tspfiles/map16z 1000 "/>
-        <property name="javato.ignore.methods" value="true"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Tsp_instr">
-        <property name="javato.work.dir" value="${benchdir}/tsp"/>
-        <property name="javato.app.main.class" value="benchmarks.tsp.Tsp"/>
-        <property name="javato.app.args" value="tspfiles/map16z 1000 "/>
-        <property name="javato.ignore.methods" value="true"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="jigsaw_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigadmin.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigedit.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/sax.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/servlet.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/Tidy.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/xerces.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/xp.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigsaw.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/oro.jar"/>
-        <property name="javato.app.main.class" value="org.w3c.jigsaw.Main"/>
-        <property name="javato.instops" value="-i org.w3c"/>
-        <property name="javato.deadlock.cyclenum.file" value="${javato.work.dir}/deadlock.list"/>
-        <property name="javato.app.args" value="-config external_benchmarks/jigsaw/jigsaw_2.2.2/Jigsaw/Jigsaw/config"/>
-        <antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="jigsaw_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigadmin.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigedit.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/sax.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/servlet.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/Tidy.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/xerces.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/xp.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/jigsaw.jar:${external_benchdir}/jigsaw/jigsaw_2.2.2/Jigsaw/classes/oro.jar"/>
-        <property name="javato.app.main.class" value="org.w3c.jigsaw.Main"/>
-        <property name="javato.instops" value="-i org.w3c"/>
-        <property name="javato.deadlock.cyclenum.file" value="${javato.work.dir}/deadlock.list"/>
-        <property name="javato.app.args" value="-config external_benchmarks/jigsaw/jigsaw_2.2.2/Jigsaw/Jigsaw/config"/>
-        <antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="elevator_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.elevator.Elevator"/>
-        <property name="javato.app.args" value="${javato.work.dir}/elevator/data3"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="elevator_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.elevator.Elevator"/>
-        <property name="javato.app.args" value="${javato.work.dir}/elevator/data3"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="JDBCMySQL-1_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL1"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="JDBCMySQL-1_instr">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL1"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="JDBCMySQL-2_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL2"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="JDBCMySQL-2_instr">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL2"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="JDBCMySQL-3_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL3"/>
-        <antcall target="analysis-run-DeadlockFuzzer"/>
-    </target>
-
-    <target name="JDBCMySQL-3_instr">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL3"/>
-        <antcall target="instr-run-DeadlockFuzzer"/>
-    </target>
-
-	<target name="JDBCMySQL-4_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL4"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="JDBCMySQL-4_instr">
-        <property name="javato.work.dir" value="${external_benchdir}"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dimmunixTests:${external_benchdir}/dimmunixTests/log4j-1.2.9.jar:${external_benchdir}/dimmunixTests/jboss-common-jdbc-wrapper.jar:${external_benchdir}/dimmunixTests/c3p0-0.8.5-pre8.jar"/>
-        <property name="javato.instops" value="-i java.sql -i org.apache -i com.mysql -i org.jboss -i javax"/>
-        <property name="javato.app.main.class" value="TestJDBCMySQL4"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="hedc_analysis">
-        <property name="javato.work.dir" value="${benchdir}/hedc"/>
-        <property name="javato.app.class.path" value="${javato.work.dir}/lib/servlet.jar"/>
-        <property name="javato.app.main.class" value="benchmarks.hedc.Tester"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="hedc_instr">
-        <property name="javato.work.dir" value="${benchdir}/hedc"/>
-        <property name="javato.app.class.path" value="${javato.work.dir}/lib/servlet.jar"/>
-        <property name="javato.app.main.class" value="benchmarks.hedc.Tester"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="cache4j_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/cache4j"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/cache4j/src/test/:${external_benchdir}/cache4j/src/main"/>
-        <property name="javato.app.main.class" value="net.sf.cache4j.test.Tester"/>
-        <property name="javato.instops" value="-i net.sf"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="cache4j_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/cache4j"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/cache4j/src/test/:${external_benchdir}/cache4j/src/main"/>
-        <property name="javato.app.main.class" value="net.sf.cache4j.test.Tester"/>
-        <property name="javato.instops" value="-i net.sf"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="lusearch_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dacapo-9.12-bach_mini:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lusearch.jar:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lucene-demos-2.4.jar:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lucene-core-2.4.jar"/>
-        <property name="javato.app.main.class" value="org.dacapo.harness.TestLusearch"/>
-        <property name="javato.instops" value="-i org.apache.lucene.store.Lock -i org.apache.lucene.store.BufferedIndexInput -i org.apache.lucene.store.BufferedIndexOutput -i org.apache.lucene.store.ChecksumIndexOutput -i org.apache.lucene.store.ChecksumIndexOutput -i org.apache.lucene.store.Directory -i org.apache.lucene.store.FSDirectory -i org.apache.lucene.store.IndexInput -i org.apache.lucene.store.IndexOutput -i org.apache.lucene.store.LockFactory -i org.apache.lucene.store.LockObtainFailedException -i org.apache.lucene.store.MMapDirectory -i org.apache.lucene.store.NativeFSLock -i org.apache.lucene.store.NativeFSLockFactory -i org.apache.lucene.store.NIOFSDirectory -i org.apache.lucene.store.NoLock -i org.apache.lucene.store.NoLockFactory -i org.apache.lucene.store.RAMDirectory -i org.apache.lucene.store.RAMFile -i org.apache.lucene.store.RAMOutputStream -i org.apache.lucene.store.RAMInputStream -i org.apache.lucene.store.SimpleFSLock -i org.apache.lucene.store.SimpleFSLockFactory -i org.apache.lucene.store.SingleInstanceLock -i org.apache.lucene.store.SingleInstanceLockFactory -i org.apache.lucene.store.VerifyingLockFactory -i org.apache.lucene.util -i org.apache.lucene.search -i org.apache.lucene.index -i org.apache.lucene.analysis -i org.apache.lucene.document -i org.apache.lucene.queryParser"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="lusearch_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dacapo-9.12-bach_mini:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lusearch.jar:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lucene-demos-2.4.jar:${external_benchdir}/dacapo-9.12-bach_mini/scratch_lusearch/jar/lucene-core-2.4.jar"/>
-        <property name="javato.app.main.class" value="org.dacapo.harness.TestLusearch"/>
-        <property name="javato.instops" value="-i org.apache.lucene.store.Lock -i org.apache.lucene.store.BufferedIndexInput -i org.apache.lucene.store.BufferedIndexOutput -i org.apache.lucene.store.ChecksumIndexOutput -i org.apache.lucene.store.ChecksumIndexOutput -i org.apache.lucene.store.Directory -i org.apache.lucene.store.FSDirectory -i org.apache.lucene.store.IndexInput -i org.apache.lucene.store.IndexOutput -i org.apache.lucene.store.LockFactory -i org.apache.lucene.store.LockObtainFailedException -i org.apache.lucene.store.MMapDirectory -i org.apache.lucene.store.NativeFSLock -i org.apache.lucene.store.NativeFSLockFactory -i org.apache.lucene.store.NIOFSDirectory -i org.apache.lucene.store.NoLock -i org.apache.lucene.store.NoLockFactory -i org.apache.lucene.store.RAMDirectory -i org.apache.lucene.store.RAMFile -i org.apache.lucene.store.RAMOutputStream -i org.apache.lucene.store.RAMInputStream -i org.apache.lucene.store.SimpleFSLock -i org.apache.lucene.store.SimpleFSLockFactory -i org.apache.lucene.store.SingleInstanceLock -i org.apache.lucene.store.SingleInstanceLockFactory -i org.apache.lucene.store.VerifyingLockFactory -i org.apache.lucene.util -i org.apache.lucene.search -i org.apache.lucene.index -i org.apache.lucene.analysis -i org.apache.lucene.document -i org.apache.lucene.queryParser"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="ArrayList_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.ArrayListDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="ArrayList_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.ArrayListDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Stack_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.StackDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Stack_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.StackDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="IdentityHashMap_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.IdentityHashMapDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="IdentityHashMap_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.IdentityHashMapDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="LinkedList_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.LinkedListDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="LinkedList_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.LinkedListDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Swing_analysis">
-        <property name="javato.work.dir" value="${benchdir}/swing"/>
-        <property name="javato.app.class.path" value="${benchdir}/swing"/>
-        <property name="javato.app.main.class" value="HangGraphics"/>
-        <property name="javato.instops" value="-i java.awt -i javax.swing"/>
-        <property name="javato.app.boot.list" value="java/awt,javax/swing"/>
-        <property name="javato.schedule.seed" value="456"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Swing_instr">
-        <property name="javato.work.dir" value="${benchdir}/swing"/>
-        <property name="javato.app.class.path" value="${benchdir}/swing"/>
-        <property name="javato.app.main.class" value="HangGraphics"/>
-        <property name="javato.instops" value="-i java.awt -i javax.swing"/>
-        <property name="javato.app.boot.list" value="java/awt,javax/swing"/>
-        <property name="javato.schedule.seed" value="456"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Sor_analysis">
-        <echo message="8 potential and 0 real race"/>
-        <property name="javato.work.dir" value="${benchdir}/sor"/>
-        <property name="javato.app.main.class" value="benchmarks.sor.Sor"/>
-        <property name="javato.app.args" value="400 400"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Sor_instr">
-        <property name="javato.work.dir" value="${benchdir}/sor"/>
-        <property name="javato.app.main.class" value="benchmarks.sor.Sor"/>
-        <property name="javato.app.args" value="400 400"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="HashMap_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.HashMapDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="HashMap_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.HashMapDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Vector_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestVector"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="Vector_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestVector"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="LinkedHashMap_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.LinkedHashMapDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="LinkedHashMap_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.LinkedHashMapDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="WeakHashMap_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.WeakHashMapDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="WeakHashMap_instr">
-        <echo message="# of potential and real races are the same"/>
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.WeakHashMapDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="TreeMap_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.TreeMapDeadlockTest"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="TreeMap_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.dstest.TreeMapDeadlockTest"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="montecarlo_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.JGFMonteCarloBenchSizeA"/>
-        <property name="javato.app.args" value="5"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="montecarlo_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="benchmarks.JGFMonteCarloBenchSizeA"/>
-        <property name="javato.app.args" value="5"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <target name="TestPerf_analysis">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestPerformance"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-        <property name="javato.app.args" value="20 100 8 1 1000"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="eclipse_analysis">
-        <property name="javato.work.dir" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.main.class" value="org.dacapo.harness.TestHarness"/>
-        <property name="javato.instops" value="-i java.util -i org.apache -i org.eclipse -i org.osgi"/>
-		<antcall target="analysis-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="eclipse_instr">
-        <property name="javato.work.dir" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.class.path" value="${external_benchdir}/dacapo-9.12-bach_mini"/>
-        <property name="javato.app.main.class" value="org.dacapo.harness.TestHarness"/>
-        <property name="javato.instops" value="-i java.util -i org.apache -i org.eclipse -i org.osgi"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-	<target name="TestPerf_instr">
-        <property name="javato.work.dir" value="${benchdir}"/>
-        <property name="javato.app.main.class" value="dimmunixTests.TestPerformance"/>
-        <property name="javato.app.class.path" value="${benchdir}/DimmunixTests_mysql_autorreconnect/DimmunixTests_mysql"/>
-        <property name="javato.app.args" value="20 100 8 1 1000"/>
-		<antcall target="instr-run-DeadlockFuzzer"/>
-	</target>
-
-    <!-- SPDOnline experiments end-->
-
-
+    <!-- Begin DeadlockFuzzer -->
     <target name="test_1">
         <echo message="1 potential and 1 real deadlock"/>
         <property name="javato.work.dir" value="${benchdir}"/>
@@ -1256,7 +544,7 @@
         <property name="javato.work.dir" value="${benchdir}"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock1b"/>
         <antcall target="deadlock-analysis"/>
-     </target>
+    </target>
 
     <target name="test_2">
         <echo message="0 potential and 0 real deadlock"/>
@@ -1508,7 +796,7 @@
 
     <target name="test_atomfuzzer_weblech">
         <property name="javato.work.dir" value="${javabenchdir}"/>
-	<property name="javato.app.class.path"
+        <property name="javato.app.class.path"
                   value="${javato.work.dir}/classes:${javato.work.dir}/weblech-0.0.3/lib/log4j-1.1.3.jar"/>
         <property name="javato.app.main.class" value="weblech.ui.TextSpider"/>
         <property name="javato.app.args" value="weblech-0.0.3/config/Spider.properties"/>
@@ -1610,28 +898,28 @@
 
 
     <target name="match.error.stat">
-         <fail>
-             <condition>
-                 <not>
-                     <filesmatch
-                             file1="${javato.home.dir}/test/benchmarks/testcases/${test.output.file}"
-                             file2="${javato.work.dir}/error.stat"/>
-                 </not>
-             </condition>
-         </fail>
-     </target>
+        <fail>
+            <condition>
+                <not>
+                    <filesmatch
+                            file1="${javato.home.dir}/test/benchmarks/testcases/${test.output.file}"
+                            file2="${javato.work.dir}/error.stat"/>
+                </not>
+            </condition>
+        </fail>
+    </target>
 
     <!-- predictest test suite follows -->
 
-     <target name="test_race1_t">
-         <echo message="3 potential and 3 real races"/>
-         <property name="javato.work.dir" value="${tmpdir}"/>
-         <property name="javato.app.main.class" value="benchmarks.testcases.TestRace1"/>
-         <antcall target="predictest-analysis"/>
-         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race1.txt"/>
-         </antcall>
-     </target>
+    <target name="test_race1_t">
+        <echo message="3 potential and 3 real races"/>
+        <property name="javato.work.dir" value="${tmpdir}"/>
+        <property name="javato.app.main.class" value="benchmarks.testcases.TestRace1"/>
+        <antcall target="predictest-analysis"/>
+        <antcall target="match.error.stat">
+            <param name="test.output.file" value="race1.txt"/>
+        </antcall>
+    </target>
 
     <target name="test_race2_t">
         <echo message="0 potential and 0 real race"/>
@@ -1731,9 +1019,9 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestRace11"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race11.txt"/>
-         </antcall>
-     </target>
+            <param name="test.output.file" value="race11.txt"/>
+        </antcall>
+    </target>
 
     <target name="test_race12_t">
         <echo message="2 real races"/>
@@ -1742,8 +1030,8 @@
         <property name="javato.activetesting.trialnum.list" value=""/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race12.txt"/>
-         </antcall>
+            <param name="test.output.file" value="race12.txt"/>
+        </antcall>
     </target>
 
     <target name="test_race13_t">
@@ -1752,8 +1040,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestRace13"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race13.txt"/>
-         </antcall>
+            <param name="test.output.file" value="race13.txt"/>
+        </antcall>
     </target>
 
     <target name="test_race14_t">
@@ -1763,8 +1051,8 @@
         <property name="javato.activetesting.trialnum.list" value=""/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race14.txt"/>
-         </antcall>
+            <param name="test.output.file" value="race14.txt"/>
+        </antcall>
     </target>
 
     <target name="test_race15_t">
@@ -1774,8 +1062,8 @@
         <property name="javato.activetesting.trialnum.list" value=""/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race15.txt"/>
-         </antcall>
+            <param name="test.output.file" value="race15.txt"/>
+        </antcall>
     </target>
 
     <target name="test_race16_t">
@@ -1785,18 +1073,18 @@
         <property name="javato.activetesting.trialnum.list" value=""/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="race16.txt"/>
-         </antcall>
+            <param name="test.output.file" value="race16.txt"/>
+        </antcall>
     </target>
 
-     <target name="test_deadlock1_t">
+    <target name="test_deadlock1_t">
         <echo message="1 potential and 1 real deadlock"/>
         <property name="javato.work.dir" value="${tmpdir}"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock1"/>
         <antcall target="predictest-analysis"/>
-         <antcall target="match.error.stat">
-              <param name="test.output.file" value="deadlock1.txt"/>
-          </antcall>
+        <antcall target="match.error.stat">
+            <param name="test.output.file" value="deadlock1.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock1a_t">
@@ -1806,8 +1094,8 @@
         <property name="javato.schedule.seed" value="456"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock1a.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock1a.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock1b_t">
@@ -1817,9 +1105,9 @@
         <property name="javato.schedule.seed" value="456"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock1b.txt"/>
-         </antcall>
-     </target>
+            <param name="test.output.file" value="deadlock1b.txt"/>
+        </antcall>
+    </target>
 
     <target name="test_deadlock2_t">
         <echo message="0 potential and 0 real deadlock"/>
@@ -1827,8 +1115,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock2"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock2.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock2.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock2a_t">
@@ -1837,8 +1125,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock2a"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock2a.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock2a.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock3_t">
@@ -1847,8 +1135,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock3"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock3.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock3.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock4_t">
@@ -1857,8 +1145,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock4"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock4.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock4.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock4b_t">
@@ -1867,8 +1155,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock4b"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock4b.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock4b.txt"/>
+        </antcall>
     </target>
 
     <target name="test_log4j_t">
@@ -1882,8 +1170,8 @@
         <!--<ant dir="${javato.work.dir}" target="build"/>-->
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="log4j.txt"/>
-         </antcall>
+            <param name="test.output.file" value="log4j.txt"/>
+        </antcall>
     </target>
 
     <target name="test_log4j2_t">
@@ -1891,17 +1179,17 @@
         <property name="javato.app.main.class" value="TestLoggingDet"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.instr.dir"
-                value="${javato.work.dir}/dist/classes"/>
+                  value="${javato.work.dir}/dist/classes"/>
         <property name="javato.instops" value="-i org.apache"/>
         <antcall target="predictest-analysis"/>
     </target>
 
     <target name="test_lockrace1_t">
-       <property name="javato.work.dir" value="${tmpdir}"/>
-       <property name="javato.app.main.class" value="benchmarks.testcases.TestLockRace1"/>
+        <property name="javato.work.dir" value="${tmpdir}"/>
+        <property name="javato.app.main.class" value="benchmarks.testcases.TestLockRace1"/>
         <property name="javato.schedule.seed" value="456"/>
-       <antcall target="predictest-analysis"/>
-   </target>
+        <antcall target="predictest-analysis"/>
+    </target>
 
     <target name="test_lucene1">
         <property name="javato.work.dir" value="${javabenchdir}/lucene-1.4.3"/>
@@ -1918,8 +1206,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock5"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock5.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock5.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock6_t">
@@ -1928,8 +1216,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock6"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock6.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock6.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock7_t">
@@ -1938,8 +1226,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock7"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock7.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock7.txt"/>
+        </antcall>
     </target>
 
     <target name="test_deadlock8_t">
@@ -1948,8 +1236,8 @@
         <property name="javato.app.main.class" value="benchmarks.testcases.TestDeadlock8"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="deadlock8.txt"/>
-         </antcall>
+            <param name="test.output.file" value="deadlock8.txt"/>
+        </antcall>
     </target>
 
     <target name="test_tsp_t">
@@ -1975,8 +1263,8 @@
         <property name="javato.app.args" value="3"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="moldyn.txt"/>
-         </antcall>
+            <param name="test.output.file" value="moldyn.txt"/>
+        </antcall>
     </target>
 
     <target name="test_rt_t">
@@ -1986,8 +1274,8 @@
         <property name="javato.app.args" value="3"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="raytracer.txt"/>
-         </antcall>
+            <param name="test.output.file" value="raytracer.txt"/>
+        </antcall>
     </target>
 
     <target name="test_mc_t">
@@ -1997,8 +1285,8 @@
         <property name="javato.app.args" value="3"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="mc.txt"/>
-         </antcall>
+            <param name="test.output.file" value="mc.txt"/>
+        </antcall>
     </target>
 
     <target name="test_hedc_t">
@@ -2008,8 +1296,8 @@
         <property name="javato.app.main.class" value="benchmarks.hedc.Tester"/>
         <antcall target="predictest-analysis"/>
         <antcall target="match.error.stat">
-             <param name="test.output.file" value="hedc.txt"/>
-         </antcall>
+            <param name="test.output.file" value="hedc.txt"/>
+        </antcall>
     </target>
 
     <target name="test_cache4j_t">
@@ -2064,16 +1352,16 @@
         <antcall target="predictest-analysis"/>
     </target>
 
-	<target name="t_test_lucene">
-		<property name="javato.work.dir" value="${javabenchdir}/lucene-2.3.0"/>
+    <target name="t_test_lucene">
+        <property name="javato.work.dir" value="${javabenchdir}/lucene-2.3.0"/>
         <property name="javato.app.main.class" value="TestDeadLock"/>
-		<property name="javato.app.class.path" value="${javato.work.dir}/classes:${javato.work.dir}/build/classes/java:${javato.work.dir}/lib/junit-4.7.jar"/>
+        <property name="javato.app.class.path" value="${javato.work.dir}/classes:${javato.work.dir}/build/classes/java:${javato.work.dir}/lib/junit-4.7.jar"/>
         <!--<property name="javato.app.instr.dir"
 				value="${javato.work.dir}/build/classes/java"/>-->
         <property name="javato.instops" value="-i org.apache.lucene -x java"/>
-		<!--<ant dir="${javato.work.dir}"/>-->
+        <!--<ant dir="${javato.work.dir}"/>-->
         <antcall target="predictest-analysis"/>
-	</target>
+    </target>
 
     <target name="t_test_log">
         <property name="javato.work.dir" value="${javabenchdir}/log_test"/>
@@ -2088,7 +1376,7 @@
 
     <!-- 1 deadlock and 2 benign data races -->
     <target name="t_test_dbcp">
-		<property name="javato.work.dir" value="${javabenchdir}/dbcptest"/>
+        <property name="javato.work.dir" value="${javabenchdir}/dbcptest"/>
         <property name="javato.app.class.path"
                   value="${javato.work.dir}/classes:${javato.work.dir}/lib/commons-dbcp.jar:${javato.work.dir}/lib/commons-pool.jar:${javato.work.dir}/lib/hsqldb.jar"/>
         <property name="javato.app.boot.list" value="java"/>
@@ -2122,7 +1410,7 @@
         <antcall target="predictest-analysis"/>
     </target>
 
-	<target name="t_test_jigsaw">
+    <target name="t_test_jigsaw">
         <property name="javato.work.dir" value="${javabenchdir}/jigsaw/Jigsaw"/>
         <property name="javato.app.instr.dir"
                   value="${javato.work.dir}/../classes/admin:${javato.work.dir}/../classes/core:${javato.work.dir}/../classes/edit"/>
@@ -2141,19 +1429,19 @@
         <property name="javato.track.lock.races" value="true"/>
         <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
         <antcall target="instr"/>
-		<parallel>
-			<antcall target="analysis-once">
-				<param name="javato.activetesting.analysis.class" value="javato.activetesting.HybridAnalysis"/>
-			</antcall>
-			<antcall target="-jigsaw_harness"/>
-		</parallel>
+        <parallel>
+            <antcall target="analysis-once">
+                <param name="javato.activetesting.analysis.class" value="javato.activetesting.HybridAnalysis"/>
+            </antcall>
+            <antcall target="-jigsaw_harness"/>
+        </parallel>
         <antcall target="-predictest-loop-jigsaw">
             <param name="javato.activetesting.analysis.class" value="javato.activetesting.PredictestAnalysis"/>
         </antcall>
-	</target>
+    </target>
 
-	<target name="t_test_tomcat">
-		<property environment="env"/>
+    <target name="t_test_tomcat">
+        <property environment="env"/>
         <property name="javato.work.dir" value="${javabenchdir}/jakarta-tomcat-4.0"/>
         <property name="javato.app.instr.dir"
                   value="${javato.work.dir}/catalina/build/classes"/>
@@ -2161,8 +1449,8 @@
                   value="${env.JAVA_HOME}/jre/lib/rt.jar:${env.JAVA_HOME}/lib/tools.jar:${javato.work.dir}/lib/jakarta-servletapi-4/lib/servlet.jar:${javato.work.dir}/lib/jakarta-regexp-1.2/jakarta-regexp-1.2.jar:${javato.work.dir}/lib/javamail-1.2/mail.jar:${javato.work.dir}/lib/jaf-1.0.2/activation.jar:${javato.work.dir}/lib/crimson.jar:${javato.work.dir}/jaxp.jar:${javato.work.dir}/lib/jaxp-1.1/xalan.jar:${javato.work.dir}/lib/jdbc2_0-stdext/jdbc2_0-stdext.jar:${javato.work.dir}/lib/jmx_1.1_ri_bin/lib/jmxri.jar:${javato.work.dir}/lib/jndi_1.2.1/lib/jndi.jar:${javato.work.dir}/lib/jndi_1.2.1/lib/ldap.jar:${javato.work.dir}/lib/jsse1.0.2/lib/jcert.jar:${javato.work.dir}/lib/jsse1.0.2/lib/jnet.jar:${javato.work.dir}/lib/jsse1.0.2/lib/jsse.jar:${javato.work.dir}/lib/junit3.7/junit.jar:${javato.work.dir}/lib/tyrex-0.9.7.0/tyrex-0.9.7.0.jar:${javato.work.dir}/lib/jta-spec1_0_1/jta-spec1_0_1.jar:${javato.work.dir}/jasper/build/classes"/>
         <property name="javato.app.main.class" value="org.apache.catalina.startup.Bootstrap"/>
         <property name="javato.instops" value="-x tyrex -i org.apache -process-dir ${javato.work.dir}/jasper/build/classes"/>
-		<property name="catalina.base" value="${javato.work.dir}/dist"/>
-		<property name="catalina.home" value="${javato.work.dir}/dist"/>
+        <property name="catalina.base" value="${javato.work.dir}/dist"/>
+        <property name="catalina.home" value="${javato.work.dir}/dist"/>
         <property name="javato.app.args" value="start"/>
         <!--
 		<ant dir="${javato.work.dir}" target="dist"/>
@@ -2175,74 +1463,74 @@
         <property name="javato.track.lock.races" value="true"/>
         <property name="javato.activetesting.errorlist.file" value="${javato.work.dir}/error.list"/>
         <antcall target="instr"/>
-		<parallel>
-			<antcall target="analysis-once">
-				<param name="javato.activetesting.analysis.class" value="javato.activetesting.HybridAnalysis"/>
-			</antcall>
-			<antcall target="-tomcat_harness"/>
-		</parallel>
+        <parallel>
+            <antcall target="analysis-once">
+                <param name="javato.activetesting.analysis.class" value="javato.activetesting.HybridAnalysis"/>
+            </antcall>
+            <antcall target="-tomcat_harness"/>
+        </parallel>
         <antcall target="-predictest-loop-tomcat">
             <param name="javato.activetesting.analysis.class" value="javato.activetesting.PredictestAnalysis"/>
         </antcall>
-	</target>
+    </target>
 
-	<target name="-jigsaw_harness">
-		<sequential>
-			<exec executable="sleep">
-				<arg value="10"/>
-			</exec>
-			<parallel>
-				<java classname="JigsawHarnessPretex"
-				fork="true" dir="${javato.work.dir}" maxmemory="8192m" taskname="client">
-				<classpath>
-					<pathelement location="${javato.work.dir}/.."/>
-				</classpath>
-				</java>
-				<sequential>
-					<exec executable="sleep">
-						<arg value="10"/>
-					</exec>
-					<java classname="org.w3c.jigsaw.admin.JigKill"
-					fork="true" dir="${javato.work.dir}" maxmemory="8192m">
-					<arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
-					<classpath>
-						<pathelement path="${javato.app.class.path}"/>
-					</classpath>
-					</java>
-				</sequential>
-			</parallel>
-			<java classname="org.w3c.jigsaw.admin.JigKill"
-					fork="true" dir="${javato.work.dir}" maxmemory="8192m">
-				<arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
-				<classpath>
-					<pathelement path="${javato.app.class.path}"/>
-				</classpath>
-			</java>
-		</sequential>
-	</target>
+    <target name="-jigsaw_harness">
+        <sequential>
+            <exec executable="sleep">
+                <arg value="10"/>
+            </exec>
+            <parallel>
+                <java classname="JigsawHarnessPretex"
+                      fork="true" dir="${javato.work.dir}" maxmemory="2048m" taskname="client">
+                    <classpath>
+                        <pathelement location="${javato.work.dir}/.."/>
+                    </classpath>
+                </java>
+                <sequential>
+                    <exec executable="sleep">
+                        <arg value="10"/>
+                    </exec>
+                    <java classname="org.w3c.jigsaw.admin.JigKill"
+                          fork="true" dir="${javato.work.dir}" maxmemory="2048m">
+                        <arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
+                        <classpath>
+                            <pathelement path="${javato.app.class.path}"/>
+                        </classpath>
+                    </java>
+                </sequential>
+            </parallel>
+            <java classname="org.w3c.jigsaw.admin.JigKill"
+                  fork="true" dir="${javato.work.dir}" maxmemory="2048m">
+                <arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
+                <classpath>
+                    <pathelement path="${javato.app.class.path}"/>
+                </classpath>
+            </java>
+        </sequential>
+    </target>
 
-	<target name="-tomcat_harness">
-		<sequential>
-			<exec executable="sleep">
-				<arg value="10"/>
-			</exec>
-			<parallel>
-				<java classname="TomcatHarness"
-				fork="true" dir="${javato.work.dir}/srcHarness" maxmemory="8192m" taskname="client">
-				<classpath>
-					<pathelement location="${javato.work.dir}/srcHarness"/>
-				</classpath>
-				</java>
-				<sequential>
-					<exec executable="sleep">
-						<arg value="20"/>
-					</exec>
-					<exec executable="${javato.work.dir}/dist/bin/shutdown.sh"/>
-				</sequential>
-			</parallel>
-			<exec executable="${javato.work.dir}/dist/bin/shutdown.sh"/>
-		</sequential>
-	</target>
+    <target name="-tomcat_harness">
+        <sequential>
+            <exec executable="sleep">
+                <arg value="10"/>
+            </exec>
+            <parallel>
+                <java classname="TomcatHarness"
+                      fork="true" dir="${javato.work.dir}/srcHarness" maxmemory="2048m" taskname="client">
+                    <classpath>
+                        <pathelement location="${javato.work.dir}/srcHarness"/>
+                    </classpath>
+                </java>
+                <sequential>
+                    <exec executable="sleep">
+                        <arg value="20"/>
+                    </exec>
+                    <exec executable="${javato.work.dir}/dist/bin/shutdown.sh"/>
+                </sequential>
+            </parallel>
+            <exec executable="${javato.work.dir}/dist/bin/shutdown.sh"/>
+        </sequential>
+    </target>
 
     <target name="-predictest-loop-jigsaw">
         <!--
@@ -2281,19 +1569,19 @@
                             <sequential>
                                 <echo message="Error:Iteration = @{errornum}:@{trialnum}"/>
                                 <echo message="------------------"/>
-								<parallel>
-									<antcall target="analysis-once">
-										<param name="javato.activetesting.errorid" value="@{errornum}"/>
-									</antcall>
-									<antcall target="-jigsaw_harness"/>
-								</parallel>
-								<parallel>
-									<antcall target="analysis-once">
-										<param name="javato.activetesting.errorid" value="@{errornum}"/>
-										<param name="javato.race.resolve.order" value="true"/>
-									</antcall>
-									<antcall target="-jigsaw_harness"/>
-								</parallel>
+                                <parallel>
+                                    <antcall target="analysis-once">
+                                        <param name="javato.activetesting.errorid" value="@{errornum}"/>
+                                    </antcall>
+                                    <antcall target="-jigsaw_harness"/>
+                                </parallel>
+                                <parallel>
+                                    <antcall target="analysis-once">
+                                        <param name="javato.activetesting.errorid" value="@{errornum}"/>
+                                        <param name="javato.race.resolve.order" value="true"/>
+                                    </antcall>
+                                    <antcall target="-jigsaw_harness"/>
+                                </parallel>
                             </sequential>
                         </for>
                     </sequential>
@@ -2339,19 +1627,19 @@
                             <sequential>
                                 <echo message="Error:Iteration = @{errornum}:@{trialnum}"/>
                                 <echo message="------------------"/>
-								<parallel>
-									<antcall target="analysis-once">
-										<param name="javato.activetesting.errorid" value="@{errornum}"/>
-									</antcall>
-									<antcall target="-tomcat_harness"/>
-								</parallel>
-								<parallel>
-									<antcall target="analysis-once">
-										<param name="javato.activetesting.errorid" value="@{errornum}"/>
-										<param name="javato.race.resolve.order" value="true"/>
-									</antcall>
-									<antcall target="-tomcat_harness"/>
-								</parallel>
+                                <parallel>
+                                    <antcall target="analysis-once">
+                                        <param name="javato.activetesting.errorid" value="@{errornum}"/>
+                                    </antcall>
+                                    <antcall target="-tomcat_harness"/>
+                                </parallel>
+                                <parallel>
+                                    <antcall target="analysis-once">
+                                        <param name="javato.activetesting.errorid" value="@{errornum}"/>
+                                        <param name="javato.race.resolve.order" value="true"/>
+                                    </antcall>
+                                    <antcall target="-tomcat_harness"/>
+                                </parallel>
                             </sequential>
                         </for>
                     </sequential>
@@ -2448,7 +1736,7 @@
         </if>
         <stopwatch name="timed-run-timer" action="start"/>
         <java classname="${javato.activetesting.class}"
-              fork="true" dir="${javato.work.dir}" maxmemory="8192m">
+              fork="true" dir="${javato.work.dir}" maxmemory="1024m">
             <arg line="${javato.app.args}"/>
             <jvmarg line="${jvm_args}"/>
             <!--            <sysproperty key="javato.deadlock.goodlock" value="false"/> -->
@@ -2490,17 +1778,17 @@
             </else>
         </if>
         <antcall target="instr"/>
-	<echo message="-------"/>
-	<echo message="Phase 1"/>
-	<echo message="-------"/>
+        <echo message="-------"/>
+        <echo message="Phase 1"/>
+        <echo message="-------"/>
         <antcall target="analysis-once">
             <param name="javato.activetesting.analysis.class" value="javato.activetesting.atominfer.AtomicityAnalysis"/>
         </antcall>
-	<echo message="-------"/>
-	<echo message="Phase 2"/>
-	<echo message="-------"/>
+        <echo message="-------"/>
+        <echo message="Phase 2"/>
+        <echo message="-------"/>
         <antcall target="timed-run">
-          <param name="javato.activetesting.class" value="javato.activetesting.atominfer.InferAtomicBlocks"/>
+            <param name="javato.activetesting.class" value="javato.activetesting.atominfer.InferAtomicBlocks"/>
         </antcall>
     </target>
 
@@ -2510,7 +1798,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity1"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2521,7 +1809,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity2"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2532,7 +1820,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity3"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2543,7 +1831,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity4"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2554,7 +1842,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity5"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2565,7 +1853,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity6"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2576,7 +1864,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity7"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2587,7 +1875,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity8"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2598,7 +1886,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity9"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2609,7 +1897,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity10"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2620,7 +1908,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity11"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2631,7 +1919,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity12"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2642,7 +1930,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity13"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2653,7 +1941,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.testcases.TestAtomicity14"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2665,9 +1953,9 @@
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.sor.Sor"/>
         <property name="javato.app.args" value="10 10"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2677,7 +1965,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/lib/servlet.jar"/>
         <property name="javato.app.main.class" value="benchmarks.hedc.Tester"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2688,22 +1976,22 @@
                   value="${javato.work.dir}/classes:${javato.work.dir}/lib/commons-logging.jar:${javato.work.dir}/lib/junit.jar:${javato.work.dir}/lib/log4j-1.2.8.jar:${javato.work.dir}/lib/unittests.jar:${javato.work.dir}/lib/velocity-dep-1.3.1.jar:${javato.work.dir}/common"/>
         <property name="javato.app.main.class" value="net.javacoding.jspider.JSpider"/>
         <property name="javato.app.args" value="http://j-spider.sourceforge.net/samplesite/"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
 
     <target name="test_atomicity_weblech">
         <property name="javato.work.dir" value="${javabenchdir}"/>
-	<property name="javato.app.class.path"
+        <property name="javato.app.class.path"
                   value="${javato.work.dir}/classes:${javato.work.dir}/weblech-0.0.3/lib/log4j-1.1.3.jar"/>
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="weblech.ui.TextSpider"/>
         <property name="javato.app.args" value="weblech-0.0.3/config/Spider.properties"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2712,9 +2000,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.philo.Philo"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2724,7 +2012,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTListTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2735,9 +2023,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTArrayListTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2747,9 +2035,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTSetTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2759,7 +2047,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTTreeSetTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2770,9 +2058,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTLinkedHashSetTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2782,9 +2070,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.dstest.MTVectorTest"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2794,7 +2082,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.Bank"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2805,7 +2093,7 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.AtomicityAccount"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
         <antcall target="atomicity-check"/>
     </target>
@@ -2816,9 +2104,9 @@
         <property name="javato.app.instr.dir" value="${javato.work.dir}/build/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/build/classes"/>
         <property name="javato.app.main.class" value="net.sf.cache4j.test.Tester"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2828,9 +2116,9 @@
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.elevator.Elevator"/>
         <property name="javato.app.args" value="${javato.work.dir}/elevator/data"/>
-	<property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
+        <property name="javato.activetesting.atominfer.atomicity_data_file" value="${javato.work.dir}/atomicity_data.out"/>
         <property name="javato.activetesting.atominfer.max_num_threads" value="5"/>
-	<property name="javato.activetesting.atominfer.disable_print" value="yes"/>
+        <property name="javato.activetesting.atominfer.disable_print" value="yes"/>
         <antcall target="atomicity-check"/>
     </target>
 
@@ -2846,31 +2134,31 @@
         <ant dir="${javato.work.dir}/.."/>
         <antcall target="instr"/>
         <parallel>
-          <antcall target="analysis-once">
-            <param name="javato.activetesting.analysis.class" value="javato.activetesting.atominfer.AtomicityAnalysis"/>
-          </antcall>
-          <sequential>
-            <exec executable="sleep">
-              <arg value="5"/>
-            </exec>
-            <java classname="JigsawHarnessPretex" fork="true" dir="${javato.work.dir}" maxmemory="8192m">
-              <classpath>
-                <pathelement location="${javato.work.dir}/.."/>
-              </classpath>
-            </java>
-            <java classname="org.w3c.jigsaw.admin.JigKill" fork="true" dir="${javato.work.dir}" maxmemory="8192m">
-              <arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
-              <classpath>
-                <pathelement path="${javato.app.class.path}"/>
-              </classpath>
-            </java>
-          </sequential>
+            <antcall target="analysis-once">
+                <param name="javato.activetesting.analysis.class" value="javato.activetesting.atominfer.AtomicityAnalysis"/>
+            </antcall>
+            <sequential>
+                <exec executable="sleep">
+                    <arg value="5"/>
+                </exec>
+                <java classname="JigsawHarnessPretex" fork="true" dir="${javato.work.dir}" maxmemory="2048m">
+                    <classpath>
+                        <pathelement location="${javato.work.dir}/.."/>
+                    </classpath>
+                </java>
+                <java classname="org.w3c.jigsaw.admin.JigKill" fork="true" dir="${javato.work.dir}" maxmemory="2048m">
+                    <arg line="-u admin -p admin --stop http://127.0.0.1:8009/"/>
+                    <classpath>
+                        <pathelement path="${javato.app.class.path}"/>
+                    </classpath>
+                </java>
+            </sequential>
         </parallel>
-	<echo message="-------"/>
-	<echo message="Phase 2"/>
-	<echo message="-------"/>
+        <echo message="-------"/>
+        <echo message="Phase 2"/>
+        <echo message="-------"/>
         <antcall target="timed-run">
-          <param name="javato.activetesting.class" value="javato.activetesting.atominfer.InferAtomicBlocks"/>
+            <param name="javato.activetesting.class" value="javato.activetesting.atominfer.InferAtomicBlocks"/>
         </antcall>
     </target>
 
@@ -2890,7 +2178,7 @@
         <property name="jvm_args" value="-ea"/>
         <stopwatch name="timer" action="start"/>
         <java classname="${javato.app.main.class}"
-              fork="true" dir="${javato.work.dir}" maxmemory="8192m">
+              fork="true" dir="${javato.work.dir}" maxmemory="1024m">
             <arg line="${javato.app.args}"/>
             <jvmarg line="${jvm_args}"/>
             <!--            <sysproperty key="javato.deadlock.goodlock" value="false"/> -->
@@ -3082,7 +2370,7 @@
     </target>
 
     <target name="test_determinism_pj_mandelbrot_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/fractal"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/fractal"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.fractal.MandelbrotSetSmp"/>
@@ -3104,7 +2392,7 @@
     </target>
 
     <target name="test_determinism_pj_montecarlo_pi_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/monte"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.monte.PiSmp"/>
@@ -3126,7 +2414,7 @@
     </target>
 
     <target name="test_determinism_pj_montecarlo_pi3_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/monte"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.monte.PiSmp3"/>
@@ -3148,7 +2436,7 @@
     </target>
 
     <target name="test_determinism_pj_floyd_row2_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/network"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.network.FloydSmpRow2"/>
@@ -3170,7 +2458,7 @@
     </target>
 
     <target name="test_determinism_pj_floyd_col2_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/network"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.network.FloydSmpCol2"/>
@@ -3192,7 +2480,7 @@
     </target>
 
     <target name="test_determinism_pj_findkey3_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/keysearch"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/keysearch"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.keysearch.FindKeySmp3"/>
@@ -3214,7 +2502,7 @@
     </target>
 
     <target name="test_determinism_pj_phylo_bnb_at">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/compbio/phyl"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritcompbio/phyl"/>
         <property name="javato.app.instr.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritcompbio.phyl.PhylogenyParsBnbSmp"/>
@@ -3338,7 +2626,7 @@
     </target>
 
     <target name="test_determinism_pj_mandelbrot">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/fractal"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/fractal"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.fractal.MandelbrotSetSmp"/>
         <property name="javato.app.args" value="400 400 -0.5 0 100 2000 0.125 tmp.pjg"/>
@@ -3348,7 +2636,7 @@
     </target>
 
     <target name="test_determinism_pj_montecarlo_pi">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/monte"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.monte.PiSmp"/>
         <property name="javato.app.args" value="19840212 10000"/>
@@ -3358,7 +2646,7 @@
     </target>
 
     <target name="test_determinism_pj_montecarlo_pi3">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/monte"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.monte.PiSmp3"/>
         <property name="javato.app.args" value="19840212 10000"/>
@@ -3368,7 +2656,7 @@
     </target>
 
     <target name="test_determinism_pj_floyd_row2">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/network"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.network.FloydSmpRow2"/>
         <property name="javato.app.args" value="19840212 0.25 50"/>
@@ -3378,7 +2666,7 @@
     </target>
 
     <target name="test_determinism_pj_floyd_col2">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/network"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.network.FloydSmpCol2"/>
         <property name="javato.app.args" value="19840212 0.25 50"/>
@@ -3388,7 +2676,7 @@
     </target>
 
     <target name="test_determinism_pj_findkey3">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/smp/keysearch"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritsmp/keysearch"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritsmp.keysearch.FindKeySmp3"/>
         <property name="javato.app.args" value="48656c6c6f2c205543204265726b656c 84646e350250cdaf3a9aacf16bddf59f deadbeefdeadbeef0123456789abcdef0000face00face0deadbeef0fea00000 20"/>
@@ -3398,7 +2686,7 @@
     </target>
 
     <target name="test_determinism_pj_phylo_bnb">
-        <property name="javato.work.dir" value="${benchdir}/determinism/pj/edu/rit/compbio/phyl"/>
+        <property name="javato.work.dir" value="/benchmarks/determinism/pj/edu/ritcompbio/phyl"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.app.main.class" value="benchmarks.determinism.pj.edu.ritcompbio.phyl.PhylogenyParsBnbSmp"/>
         <property name="javato.app.args" value="iguana16.phy . 16 10"/>
@@ -3532,7 +2820,7 @@
     </target>
 
     <target name="infer_determinism_pj_mandelbrot_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/fractal"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/fractal"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.fractal.MandelbrotSetSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3546,7 +2834,7 @@
     </target>
 
     <target name="infer_determinism_pj_mandelbrot_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/fractal"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/fractal"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.fractal.MandelbrotSetSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3560,7 +2848,7 @@
     </target>
 
     <target name="infer_determinism_pj_montecarlo_pi_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/monte"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.monte.PiSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3574,7 +2862,7 @@
     </target>
 
     <target name="infer_determinism_pj_montecarlo_pi_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/monte"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.monte.PiSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3588,7 +2876,7 @@
     </target>
 
     <target name="infer_determinism_pj_montecarlo_pi3_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/monte"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.monte.PiSmp3"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3602,7 +2890,7 @@
     </target>
 
     <target name="infer_determinism_pj_montecarlo_pi3_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/monte"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/monte"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.monte.PiSmp3"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3616,7 +2904,7 @@
     </target>
 
     <target name="infer_determinism_pj_floyd_row2_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/network"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.network.FloydSmpRow2"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3630,7 +2918,7 @@
     </target>
 
     <target name="infer_determinism_pj_floyd_row2_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/network"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.network.FloydSmpRow2"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3644,7 +2932,7 @@
     </target>
 
     <target name="infer_determinism_pj_floyd_col2_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/network"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.network.FloydSmpCol2"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3658,7 +2946,7 @@
     </target>
 
     <target name="infer_determinism_pj_floyd_col2_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/network"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/network"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.network.FloydSmpCol2"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3672,7 +2960,7 @@
     </target>
 
     <target name="infer_determinism_pj_findkey3_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/keysearch"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/keysearch"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.keysearch.FindKeySmp3"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3686,7 +2974,7 @@
     </target>
 
     <target name="infer_determinism_pj_findkey3_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/smp/keysearch"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritsmp/keysearch"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritsmp.keysearch.FindKeySmp3"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3700,7 +2988,7 @@
     </target>
 
     <target name="infer_determinism_pj_phylo_bnb_same">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/compbio/phyl"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritcompbio/phyl"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritcompbio.phyl.PhylogenyParsBnbSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>
@@ -3714,7 +3002,7 @@
     </target>
 
     <target name="infer_determinism_pj_phylo_bnb_diff">
-        <property name="javato.work.dir" value="${benchdir}/detinfer/pj/edu/rit/compbio/phyl"/>
+        <property name="javato.work.dir" value="/benchmarks/detinfer/pj/edu/ritcompbio/phyl"/>
         <property name="javato.app.main.class" value="benchmarks.detinfer.pj.edu.ritcompbio.phyl.PhylogenyParsBnbSmp"/>
         <property name="javato.app.class.path" value="${javato.work.dir}/classes"/>
         <property name="javato.determinism.infer" value="true"/>

@@ -40,8 +40,9 @@ import javato.instrumentor.Visitor;
  */
 public class InstrumentorForActiveTesting {
     public static void main(String[] args) {
-        System.setProperty("sun.boot.class.path", "C:/Users/tim.heller/.jdks/jdk1.6.0_45/jre/lib/rt.jar");
-        System.setProperty("java.ext.dirs", "C:/Users/tim.heller/.jdks/jdk1.6.0_45/jre/lib/rt.jar");
+        String rt = System.getProperty("user.dir") + "/lib/rt.jar";
+        System.setProperty("sun.boot.class.path", rt);
+        System.setProperty("java.ext.dirs", rt);
         RecursiveVisitor vv = new RecursiveVisitor(null);
         VisitorForActiveTesting pv = new VisitorForActiveTesting(vv);
         vv.setNextVisitor(pv);

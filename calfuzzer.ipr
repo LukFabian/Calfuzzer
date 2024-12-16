@@ -5,7 +5,11 @@
     <groovy codeStyle="LEGACY" />
   </component>
   <component name="AntConfiguration">
-    <buildFile url="file://$PROJECT_DIR$/build.xml" />
+    <buildFile url="file://$PROJECT_DIR$/build.xml">
+      <additionalClassPath>
+        <entry dir="file://$PROJECT_DIR$/../Projektarbeit/calfuzzer" />
+      </additionalClassPath>
+    </buildFile>
     <buildFile url="file://$PROJECT_DIR$/run.xml" />
   </component>
   <component name="BuildJarProjectSettings">
@@ -18,6 +22,12 @@
   <component name="CodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS" />
     <option name="USE_PER_PROJECT_SETTINGS" value="false" />
+  </component>
+  <component name="CommitMessageInspectionProfile">
+    <profile version="1.0">
+      <inspection_tool class="CommitFormat" enabled="true" level="WARNING" enabled_by_default="true" />
+      <inspection_tool class="CommitNamingConvention" enabled="true" level="WARNING" enabled_by_default="true" />
+    </profile>
   </component>
   <component name="CompilerConfiguration">
     <resourceExtensions>
@@ -219,7 +229,7 @@
       <module fileurl="file://$PROJECT_DIR$/Calfuzzer.iml" filepath="$PROJECT_DIR$/Calfuzzer.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="corretto-1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/classes" />
   </component>
   <component name="ResourceManagerContainer">

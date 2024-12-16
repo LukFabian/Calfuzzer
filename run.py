@@ -102,6 +102,7 @@ def execute_cmd(cmd, timeout=None):
 
 def run(bench_name, single_run_timeout, num_iter):
     run_analysis("DeadlockFuzzer", bench_name, single_run_timeout, num_iter=num_iter)
+    run_analysis("DeadlockFuzzer-I", bench_name, single_run_timeout, num_iter=num_iter)
 
 
 def convert2std(input_filename, output_filename):

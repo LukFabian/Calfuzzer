@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="83c90376-b088-4a4f-9f4a-2cb556e3d452" name="Changes" comment="fix(calfuzzer): changed runtime settings">
-      <change beforePath="$PROJECT_DIR$/src/javato/activetesting/instrumentor/InstrumentorForActiveTesting.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/javato/activetesting/instrumentor/InstrumentorForActiveTesting.java" afterDir="false" />
+    <list default="true" id="83c90376-b088-4a4f-9f4a-2cb556e3d452" name="Changes" comment="Got tests to run (hangs after a few tests)">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/calfuzzer.iws" beforeDir="false" afterPath="$PROJECT_DIR$/calfuzzer.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.xml" beforeDir="false" afterPath="$PROJECT_DIR$/run.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,27 +23,10 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="dev" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "LukFabian"
-  }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/LukFabian/Calfuzzer",
-    "accountId": "b04faa8f-28f4-4c4e-ac32-6798e34c0e8e"
-  }
-}]]></component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
@@ -59,17 +45,16 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/swim/Hochschule/calfuzzer/src/javato",
+    "git-widget-placeholder": "dev",
+    "last_opened_file_path": "/home/swim/Hochschule/calfuzzer/src/javato/instrumentor",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
+    "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "project.propVCSSupport.Mappings",
+    "settings.editor.selected.configurable": "configurable.group.language",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -79,7 +64,7 @@
       <recent name="C:\Users\tim.heller\IdeaProjects\calfuzzer" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.InstrumentorForActiveTesting">
+  <component name="RunManager" selected="Application.TestDeadlock5">
     <configuration name="DeadlockFuzzer" type="AntRunConfiguration">
       <antsettings antfile="file://$PROJECT_DIR$/run.xml" target="deadlockfuzzer" />
       <method v="2">
@@ -124,17 +109,15 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PathTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="TestDeadlock5" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="benchmarks.testcases.TestDeadlock5" />
       <module name="Calfuzzer" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="javato.activetesting.determinism.*" />
+          <option name="PATTERN" value="benchmarks.testcases.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="javato.activetesting.determinism" />
-      <option name="MAIN_CLASS_NAME" value="javato.activetesting.determinism.PathTest" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -187,30 +170,22 @@
       <item itemvalue="Ant Target.DeadlockFuzzer" />
       <item itemvalue="Ant Target.deadlockfuzzer" />
       <item itemvalue="Ant Target.Unnamed" />
+      <item itemvalue="Application.TestDeadlock5" />
       <item itemvalue="Application.InstrumentorForActiveTesting" />
       <item itemvalue="Application.ApproxDeterministicSchedulerTest" />
-      <item itemvalue="JUnit.PathTest" />
       <item itemvalue="JUnit.RaceBreakpointTest" />
       <item itemvalue="JUnit.RaceBreakpointTest (1)" />
       <item itemvalue="Remote JVM Debug.Unnamed" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.TestDeadlock5" />
         <item itemvalue="Application.InstrumentorForActiveTesting" />
         <item itemvalue="Application.ApproxDeterministicSchedulerTest" />
         <item itemvalue="JUnit.RaceBreakpointTest (1)" />
         <item itemvalue="JUnit.RaceBreakpointTest" />
-        <item itemvalue="JUnit.PathTest" />
       </list>
     </recent_temporary>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.23726.103" />
-        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.23726.103" />
-      </set>
-    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration" cleanupOnStartRun="true">
@@ -237,7 +212,6 @@
       <workItem from="1732525828205" duration="1886000" />
       <workItem from="1732527761698" duration="8243000" />
       <workItem from="1733133566675" duration="6989000" />
-      <workItem from="1734345913039" duration="1005000" />
     </task>
     <task id="LOCAL-00002" summary="Add gitignore">
       <option name="closed" value="true" />
@@ -263,23 +237,7 @@
       <option name="project" value="LOCAL" />
       <updated>1731330134114</updated>
     </task>
-    <task id="LOCAL-00005" summary="docs(readme): added readme.md and several other small changes">
-      <option name="closed" value="true" />
-      <created>1734345750530</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1734345750530</updated>
-    </task>
-    <task id="LOCAL-00006" summary="fix(calfuzzer): changed runtime settings">
-      <option name="closed" value="true" />
-      <created>1734346871784</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1734346871784</updated>
-    </task>
-    <option name="localTasksCounter" value="7" />
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -303,9 +261,7 @@
     <MESSAGE value="Add gitignore" />
     <MESSAGE value="Migrate to Java 1.8" />
     <MESSAGE value="Got tests to run (hangs after a few tests)" />
-    <MESSAGE value="docs(readme): added readme.md and several other small changes" />
-    <MESSAGE value="fix(calfuzzer): changed runtime settings" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(calfuzzer): changed runtime settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="Got tests to run (hangs after a few tests)" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

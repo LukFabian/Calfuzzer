@@ -13,8 +13,7 @@ run_xml_file = os.path.join(BASE_PATH, "run.xml")
 stable_xml_file = os.path.join(BASE_PATH, "run_stable.xml")
 
 ant_path = pathlib.Path.joinpath(BASE_PATH, pathlib.Path("lib"), pathlib.Path("ant-contrib.jar"))
-pre_cmds = f"export ANT_HOME={ant_path} export JAVA_HOME=/home/swim/.jdks/corretto-1.8.0_432"
-
+pre_cmds = f"export ANT_HOME={ant_path} export JAVA_HOME={os.environ.get('JAVA_HOME')}"
 
 def get_total_time(benchmark, analysis_name):
     out_path = os.path.join(out_files_base, benchmark, analysis_name)
@@ -141,8 +140,8 @@ def convert2std(input_filename, output_filename):
 
 
 def record_trace(bench_name):
-    pre_cmds = "export ANT_HOME=/home/apache-ant-1.7.1-bin/apache-ant-1.7.1;" \
-               "export JAVA_HOME=/home/jdk1.6.0_45"
+    pre_cmds = f"export ANT_HOME={pathlib.Path.joinpath(pathlib.Path(BASE_PATH).parent, 'lib', 'ant-contrib.jar')};" \
+               f"export JAVA_HOME={os.environ.get('JAVA_HOME')}"
     analysis_name = "PrintTrace"
     print("\nRecording traces.")
     prepare_xml_file(analysis_name)
@@ -156,7 +155,7 @@ def record_trace(bench_name):
 
     std_out_file = os.path.join(out_files_base, bench_name, analysis_name, "{}_dlf.std".format(bench_name))
     convert2std(log_out_file, std_out_file)
-    execute_cmd("rm {}".format(log_out_file))
+
 
 
 def create_out_folders(path, program_name, analysis_name):

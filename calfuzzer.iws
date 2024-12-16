@@ -5,11 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="83c90376-b088-4a4f-9f4a-2cb556e3d452" name="Changes" comment="Got tests to run (hangs after a few tests)">
-      <change beforePath="$PROJECT_DIR$/Calfuzzer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Calfuzzer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/calfuzzer.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/calfuzzer.ipr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/calfuzzer.iws" beforeDir="false" afterPath="$PROJECT_DIR$/calfuzzer.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run.xml" beforeDir="false" afterPath="$PROJECT_DIR$/run.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/javato/activetesting/instrumentor/InstrumentorForActiveTesting.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/javato/activetesting/instrumentor/InstrumentorForActiveTesting.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +54,7 @@
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "configurable.group.build",
+    "settings.editor.selected.configurable": "configurable.group.language",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>

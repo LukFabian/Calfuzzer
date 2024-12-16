@@ -15,7 +15,7 @@ program.
 
 ### 1. Running the Program
 
-The `deadlockfuzzer` program expects a java 1.8 jdk in your JAVA_HOME environment variable
+The `deadlockfuzzer` program expects a java 8 jdk in your JAVA_HOME environment variable
 and can be executed in two ways:
 
 #### a. Using Apache Ant Target
@@ -82,6 +82,21 @@ level under `File > Project Structure > Project` and set the same sdk under `mod
 
 ## Known Problems
 
-1. Currently the `--record` option is not working as intended - this needs to be fixed
-2. The compile_results.py functionality is working but not very useful, the amount of information written into the
-   csv-files could be improved upon
+1. Currently, the `--record` option for the run.py script is not working as intended - this needs to be fixed
+
+## Limitations
+
+1. The compile_results.py functionality is working but not very useful, the amount of information written into the
+   csv-files could be improved upon. The threads which deadlocked and maybe which statements were responsible for it
+   would be valuable information.
+2. The program cannot accept arbitrary java programs but has, in its current state, defined tests. For this program to
+   accept arbitrary java programs as input, those programs would have to be processed in similar fashion as the
+   tests under `test/benchmarks/testcases`
+3. This program was updated to java 8, however java 9 with its module update broke
+   the [soot](https://github.com/soot-oss/soot) compatability in multiple ways; the jvm api changes broke the current
+   soot code and the module update changed the java directory structure. As soot is currently only partially supporting
+   Java 9 modules, this proved to be a task too difficult to complete with the assigned time for the project.
+4. The file `lib/rt.jar` is still from java 1.6, as this was necessary for soot compatability. When migrating from java
+   8 to 9, there is a high chance for rt.jar to break, as it has legacy runtime objects.
+5. Run targets other than `deadlockfuzzer` (e.g. `racefuzzer`) are not supported with the current run.py and
+   compile_results.py script. They can be added analogous to the `deadlockfuzzer` though.
